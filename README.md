@@ -1,4 +1,4 @@
-# Next-Best-Location-
+# Next-Best-Location
 Sparkathon Project
 
 #Demo
