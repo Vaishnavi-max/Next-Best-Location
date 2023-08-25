@@ -6,8 +6,10 @@ from shapely.geometry import Point
 from streamlit_folium import st_folium
 
 
-def init_map(center=(22.6139, 77.2090), zoom_start=10, map_type="cartodbpositron"):
+def init_map(center=[22.6139, 77.2090], zoom_start=4, map_type="cartodbdark_matter"):
     return folium.Map(location=center, zoom_start=zoom_start, tiles=map_type)
+
+init_map()
 
 
 def create_point_map(df):
@@ -33,12 +35,13 @@ def plot_from_df(df, folium_map):
 
 
 def load_df():
-    data = {'ID': ['Monkey', 'Banana'],
+    cityData = pd.read_csv('../data/cityData.csv')
+    data = {'ID': ['Monkey', 'B'],
             'Icon_ID': [0, 1],
-            'Icon_Size': [30, 40],
-            'Opacity': [1, 0.8],
-            'Latitude': [33.772815, 33.879216],
-            'Longitude': [-84.393062, -84.209269]}
+            'Icon_Size': [50,50],
+            'Opacity': [1, 1],
+            'Latitude': [28.5275544,19.082502],
+            'Longitude': [77.0441742,72.7163741]}
     df = pd.DataFrame(data)
     return df
 
@@ -60,11 +63,11 @@ FACT_BACKGROUND = """
                     </div>
                     """
 
-TITLE = 'A.I. APE'
+TITLE = 'Next Best Location'
 
-IM_CONSTANTS = {'LOGO': 'https://tinyurl.com/5xpxpecw',
-                0: 'https://i.ibb.co/g9GZVG9/Monkey-Head.png',
-                1: 'https://i.ibb.co/HLyBgJ4/banana.png',
+IM_CONSTANTS = {'LOGO': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQorPbeKx3qEC0IMzcqIdCQeyJuf929raImVcPKSWU&s',
+                0: 'https://cdn.corporate.walmart.com/dims4/WMT/15870a4/2147483647/strip/true/crop/1224x792+0+0/resize/870x563!/quality/90/?url=https%3A%2F%2Fcdn.corporate.walmart.com%2F0e%2F78%2F1c0917c94ce29c76e21e59934d25%2Flogo-walamrtspark-blue-transparent-background.png',
+                1: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQorPbeKx3qEC0IMzcqIdCQeyJuf929raImVcPKSWU&s',
                 }
 SELECTED_MAP = {'Monkey': 0, 'Banana': 1}
 
@@ -111,11 +114,11 @@ def main():
     _, r2_col1, r2_col2, r2_col3, _ = st.columns([1, 4.5, 1, 6, 1])
     with r2_col1:
         # info sidebar
-        r2_col1.markdown('## Arcane Optimization of Potassium Intake')
-        text1, text2 = "Monkey's Tracked", " XX Active Monkey"
+        r2_col1.markdown('## Potential Next Walmart Store')
+        text1, text2 = "stat1", "stat2"
         st.markdown(FACT_BACKGROUND.format(text1, IM_CONSTANTS[0], 24, text2), unsafe_allow_html=True)
         st.markdown("""<div style="padding-top: 15px"></div>""", unsafe_allow_html=True)
-        text1, text2 = "Banana Locations", " YY Outstanding Bananas"
+        text1, text2 = "locations", " YY "
         st.markdown(FACT_BACKGROUND.format(text1, IM_CONSTANTS[1], 30, text2), unsafe_allow_html=True)
 
         # white space
