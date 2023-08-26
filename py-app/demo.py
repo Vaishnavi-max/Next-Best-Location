@@ -16,11 +16,13 @@ from streamlit_folium import st_folium
 
 # world = gpd.read_file(data)
 
-def init_map(center=[22.6139, 77.2090], zoom_start=4.5, map_type="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"):
+def init_map(center=[22.6139, 85.2090], zoom_start=4.5, map_type="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png", max_zoom=5):
     attr = "<a href='https://stadiamaps.com/'>Stadia Maps</a>"
-    return folium.Map(location=center, zoom_start=zoom_start, tiles=map_type, attr=attr, zoom_control=False)
+    return folium.Map(location=center, zoom_start=zoom_start, tiles=map_type, attr=attr, zoom_control=False, min_zoom=max_zoom)
 
 init_map()
+
+
 
 
 def create_point_map(df):
@@ -126,21 +128,38 @@ def main():
     # format page
     
     st.set_page_config(TITLE, page_icon=IM_CONSTANTS['LOGO'], layout='wide')
-    st.sidebar.title("Next Best Location")
+    if 'state_names' not in st.session_state:
+        st.session_state.state_names = []
+    if 'population_factor' not in st.session_state:
+        st.session_state.population_factor = 0
+    if 'road_quality_factor' not in st.session_state:
+        st.session_state.road_quality_factor = 0
+    if 'economy_factor' not in st.session_state:
+        st.session_state.economy_factor = 0
+
     state_names = [
-"Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-"Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Goa",
-"Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
-"Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-"Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-"Uttarakhand", "Uttar Pradesh", "West Bengal",
-"Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli",
-"Daman and Diu", "Delhi", "Lakshadweep", "Puducherry"]
-    st.sidebar.multiselect('Select State', state_names)
-    st.sidebar.slider('Population Factor', 0, 100)
-    st.sidebar.slider('Road Quality Factor', 0, 100)
-    st.sidebar.slider('Economy Factor', 0, 100)
-    st.sidebar.button('Apply')
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Goa",
+        "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+        "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttarakhand", "Uttar Pradesh", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli",
+        "Daman and Diu", "Delhi", "Lakshadweep", "Puducherry"
+    ]
+
+    st.sidebar.multiselect('Select State', state_names, st.session_state.state_names)
+    st.sidebar.slider('Population Factor', 0, 100, st.session_state.population_factor)
+    st.sidebar.slider('Road Quality Factor', 0, 100, st.session_state.road_quality_factor)
+    st.sidebar.slider('Economy Factor', 0, 100, st.session_state.economy_factor)
+
+    if st.sidebar.button('Apply'):
+        st.session_state.state_names = st.sidebar.multiselect('Select State', state_names)
+        st.session_state.population_factor = st.sidebar.slider('Population Factor', 0, 100)
+        st.session_state.road_quality_factor = st.sidebar.slider('Road Quality Factor', 0, 100)
+        st.session_state.economy_factor = st.sidebar.slider('Economy Factor', 0, 100)
+
+
 
     st.markdown("""
             <style>
