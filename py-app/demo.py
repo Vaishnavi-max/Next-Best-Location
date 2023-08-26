@@ -2,12 +2,23 @@ import folium
 import geopandas
 import pandas as pd
 import streamlit as st
+import geopandas as gpd
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 
+# import requests
+# import geopandas as gpd
+# from io import StringIO
 
-def init_map(center=[22.6139, 77.2090], zoom_start=4, map_type="cartodbdark_matter"):
-    return folium.Map(location=center, zoom_start=zoom_start, tiles=map_type)
+# url = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson'
+# response = requests.get(url)
+# data = StringIO(response.text)
+
+# world = gpd.read_file(data)
+
+def init_map(center=[22.6139, 77.2090], zoom_start=4.5, map_type="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"):
+    attr = "<a href='https://stadiamaps.com/'>Stadia Maps</a>"
+    return folium.Map(location=center, zoom_start=zoom_start, tiles=map_type, attr=attr, zoom_control=False)
 
 init_map()
 
@@ -32,17 +43,34 @@ def plot_from_df(df, folium_map):
                       opacity=row.Opacity,
                       icon=icon).add_to(folium_map)
     return folium_map
+# def plot_from_df(df, folium_map):
+#     df = create_point_map(df)
+#     circle_options = {
+#         'color': 'blue',  # Set circle outline color to blue
+#         'fill_color': 'blue',  # Set fill color to blue
+#         'fill_opacity': 0.5,  # Set fill opacity
+#     }
+#     for i, row in df.iterrows():
+#         radius = row.Icon_Size / 2  # Calculate radius from icon size
+#         folium.CircleMarker(
+#             location=[row.Latitude, row.Longitude],
+#             radius=radius,
+#             tooltip=f'{row.ID}',
+#             **circle_options
+#         ).add_to(folium_map)
+#     return folium_map
 
 
 def load_df():
-    cityData = pd.read_csv('../data/cityData.csv')
-    data = {'ID': ['Monkey', 'B'],
-            'Icon_ID': [0, 1],
-            'Icon_Size': [50,50],
-            'Opacity': [1, 1],
-            'Latitude': [28.5275544,19.082502],
-            'Longitude': [77.0441742,72.7163741]}
-    df = pd.DataFrame(data)
+    #cityData = pd.read_csv('../data/cityData.csv')
+    walmartStores = pd.read_csv('../data/walmart-stores.csv')
+    # data = {'ID': ['Monkey', 'B'],
+    #         'Icon_ID': [0, 1],
+    #         'Icon_Size': [50,50],
+    #         'Opacity': [1, 1],
+    #         'Latitude': [28.5275544,19.082502],
+    #         'Longitude': [77.0441742,72.7163741]}
+    df = pd.DataFrame(walmartStores)
     return df
 
 
@@ -66,11 +94,13 @@ FACT_BACKGROUND = """
 TITLE = 'Next Best Location'
 
 IM_CONSTANTS = {'LOGO': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQorPbeKx3qEC0IMzcqIdCQeyJuf929raImVcPKSWU&s',
-                0: 'https://cdn.corporate.walmart.com/dims4/WMT/15870a4/2147483647/strip/true/crop/1224x792+0+0/resize/870x563!/quality/90/?url=https%3A%2F%2Fcdn.corporate.walmart.com%2F0e%2F78%2F1c0917c94ce29c76e21e59934d25%2Flogo-walamrtspark-blue-transparent-background.png',
+                0: 'https://uploads-ssl.webflow.com/64248e7fd5f30d79c9e57d64/64e6177329c2d71389b1b219_walmart.png',
                 1: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQorPbeKx3qEC0IMzcqIdCQeyJuf929raImVcPKSWU&s',
                 }
-SELECTED_MAP = {'Monkey': 0, 'Banana': 1}
+SELECTED_MAP = {'walmart potential location': 0, 'walmart potential location2': 1}
 
+# world = gpd.read_file('countries.geojson')
+# india = world[world['ADMIN'] == 'India']
 
 @st.cache_resource  # @st.cache_data
 def load_map():
@@ -78,23 +108,51 @@ def load_map():
     m = init_map()  # init
     df = load_df()  # load data
     m = plot_from_df(df, m)  # plot points
+    # folium.GeoJson(india, style_function=lambda feature: {
+    # 'fillColor': '#0000FF',  # Blue color for India
+    # 'color': 'black',
+    # 'weight': 2,
+    # 'dashArray': '5, 5',}).add_to(m)
+    # folium.GeoJson(world, style_function=lambda feature: {
+    #         'fillColor': '#FFFFFF',  # White color for other countries
+    #         'color': 'black',
+    #         'weight': 2,
+    #         'dashArray': '5, 5',}).add_to(m)
     return m
 
+    
 
 def main():
     # format page
+    
     st.set_page_config(TITLE, page_icon=IM_CONSTANTS['LOGO'], layout='wide')
+    st.sidebar.title("Next Best Location")
+    state_names = [
+"Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+"Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Goa",
+"Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+"Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+"Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+"Uttarakhand", "Uttar Pradesh", "West Bengal",
+"Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli",
+"Daman and Diu", "Delhi", "Lakshadweep", "Puducherry"]
+    st.sidebar.multiselect('Select State', state_names)
+    st.sidebar.slider('Population Factor', 0, 100)
+    st.sidebar.slider('Road Quality Factor', 0, 100)
+    st.sidebar.slider('Economy Factor', 0, 100)
+    st.sidebar.button('Apply')
+
     st.markdown("""
             <style>
                    .block-container {
                         padding-top: 1rem;
                         padding-bottom: 0rem;
-                        padding-left: 15rem;
-                        padding-right: 15rem;
+                        padding-left: 2rem;
+                        padding-right: 2rem;
                     }
             </style>
             """, unsafe_allow_html=True)
-    st.title(TITLE)
+    #st.title(TITLE)
 
     # load map data @st.cache_resource
     m = load_map()
@@ -103,39 +161,47 @@ def main():
         st.session_state.selected_id = None
 
     # setting up the header with its own row
-    _, r1_col1, r1_col2, r1_col3, _ = st.columns([1, 4.5, 1, 6, 1])
-    with r1_col1:
-        st.markdown(f"<p style='font-size: 27px;'><i>Interactive Mapping Demonstration</i></p>",
-                    unsafe_allow_html=True)
-    with r1_col3:
-        st.write('')
+    # _, r1_col1, r1_col2, r1_col3, _ = st.columns([1, 4.5, 1, 6, 1])
+    # with r1_col1:
+    #     st.markdown(f"<p style='font-size: 27px;'><i>Interactive Mapping Demonstration</i></p>",
+    #                 unsafe_allow_html=True)
+    # with r1_col3:
+    #     st.write('')
 
     # main information line: includes map location
-    _, r2_col1, r2_col2, r2_col3, _ = st.columns([1, 4.5, 1, 6, 1])
-    with r2_col1:
+    map_col = st.columns([1])
+    # _, r2_col1, r2_col2, r2_col3, _ = st.columns([1, 4.5, 1, 6, 1])
+    # with r2_col1:
         # info sidebar
-        r2_col1.markdown('## Potential Next Walmart Store')
-        text1, text2 = "stat1", "stat2"
-        st.markdown(FACT_BACKGROUND.format(text1, IM_CONSTANTS[0], 24, text2), unsafe_allow_html=True)
-        st.markdown("""<div style="padding-top: 15px"></div>""", unsafe_allow_html=True)
-        text1, text2 = "locations", " YY "
-        st.markdown(FACT_BACKGROUND.format(text1, IM_CONSTANTS[1], 30, text2), unsafe_allow_html=True)
-
+        # r2_col1.markdown('## Next Best Location')
+        # text1, text2 = "stat1", "stat2"
+       # st.markdown(FACT_BACKGROUND.format(text1, IM_CONSTANTS[0], 24, text2), unsafe_allow_html=True)
+        # st.markdown("""<div style="padding-top: 15px;"></div>""", unsafe_allow_html=True)
+        # text1, text2 = "locations", " YY "
+        #st.markdown(FACT_BACKGROUND.format(text1, IM_CONSTANTS[1], 30, text2), unsafe_allow_html=True)
+        
+        # st.multiselect('Select State', state_names)
+        # st.slider('Population Factor', 0, 100)
+        # st.slider('Road Quality Factor', 0, 100)
+        # st.slider('Economy Factor', 0, 100)
+        # st.button('Apply')
         # white space
-        for _ in range(10):
-            st.markdown("")
+        # for _ in range(10):
+        #     st.markdown("")
 
         # place for logos
-        logo1, logo2, _ = st.columns([1, 1, 2])
-        logo1.image(IM_CONSTANTS['LOGO'], width=110)
+        # logo1, logo2, _ = st.columns([1, 1, 2])
+        #logo1.image(IM_CONSTANTS['LOGO'], width=110)
 
     # white space
-    with r2_col2:
-        st.write("")
+    # with r2_col2:
+    #     st.write("")
 
     # map container
-    with r2_col3:
-        level1_map_data = st_folium(m, height=520, width=600)
+    # with r2_col3:
+    _,map_col,_ = st.columns([1,10,1])
+    with map_col:
+        level1_map_data = st_folium(m, height=700, width=1024)
         st.session_state.selected_id = level1_map_data['last_object_clicked_tooltip']
 
         if st.session_state.selected_id is not None:
@@ -145,3 +211,34 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# st.button('Click me')
+# st.data_editor('Edit data', data)
+# st.checkbox('I agree')
+# st.toggle('Enable')
+# st.radio('Pick one', ['cats', 'dogs'])
+# st.selectbox('Pick one', ['cats', 'dogs'])
+# st.multiselect('Buy', ['milk', 'apples', 'potatoes'])
+# st.slider('Pick a number', 0, 100)
+# st.select_slider('Pick a size', ['S', 'M', 'L'])
+# st.text_input('First name')
+# st.number_input('Pick a number', 0, 10)
+# st.text_area('Text to translate')
+# st.date_input('Your birthday')
+# st.time_input('Meeting time')
+# st.file_uploader('Upload a CSV')
+# st.download_button('Download file', data)
+# st.camera_input("Take a picture")
+# st.color_picker('Pick a color')
+
+# # Use widgets' returned values in variables:
+# >>> for i in range(int(st.number_input('Num:'))):
+# >>>   foo()
+# >>> if st.sidebar.selectbox('I:',['f']) == 'f':
+# >>>   b()
+# >>> my_slider_val = st.slider('Quinn Mallory', 1, 88)
+# >>> st.write(slider_val)
+
+# # Disable widgets to remove interactivity:
+# >>> st.slider('Pick a number', 0, 100, disabled=True)
