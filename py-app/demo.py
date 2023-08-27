@@ -7,12 +7,23 @@ import streamlit as st
 import geopandas as gpd
 from shapely.geometry import Point
 from streamlit_folium import st_folium
+import time
+import plotly.express as px
+import numpy as np
+
+
+
+state_rows = pd.read_csv('tat.csv')
+df1 = pd.read_csv('superstore.csv')
+df = pd.read_csv('state_reading.csv')
 
 model2 = pickle.load(open('state_prediction.pkl', 'rb'))
-
+stop_but = 0
 input_values = []
 # tab1, tab2 = st.tabs(['Longs&Lats', 'Prediction'])
 selected_state = []
+prediction = []
+result = []
 
 state_names = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -216,7 +227,9 @@ def main():
     if 'road_quality_factor' not in st.session_state:
         st.session_state.road_quality_factor = 0
     if 'economy_factor' not in st.session_state:
-        st.session_state.economy_factor = 0\
+        st.session_state.economy_factor = 0
+  
+
 
     m = load_map() 
 
@@ -233,56 +246,110 @@ def main():
     # st.sidebar.slider('Population Factor', 0, 100, key="population_factor")
     # st.sidebar.slider('Road Quality Factor', 0, 100, key="road_quality_factor")
     # st.sidebar.slider('Economy Factor', 0, 100, key="economy_factor")
-    prediction = []
-    result = []
-   # st.title('New Prediction')
-    pop_slider = float(st.sidebar.slider(label='Population',
-                                 min_value=10000,
-                                 max_value=10000000))
+#     prediction = []
+#     result = []
+#    # st.title('New Prediction')
+#     pop_slider = float(st.sidebar.slider(label='Population',
+#                                  min_value=10000,
+#                                  max_value=10000000))
                                  
-    road_factor = float(st.sidebar.slider(label="Road Quality",
-                                  min_value=10000,
-                                  max_value=1000000))
-    economy = st.sidebar.slider(label="Economy Index",
-                        min_value=1000,
-                        max_value=1000000)
-    literacy_rate = st.sidebar.slider(label="Literacy Rate",
-                              min_value=0,
-                              max_value=10)
-    tier_value = st.sidebar.selectbox('Tier Place you looking for?',
-                              ('Top', 'Intermediate', 'Low'))
+#     road_factor = float(st.sidebar.slider(label="Road Quality",
+#                                   min_value=10000,
+#                                   max_value=1000000))
+#     economy = st.sidebar.slider(label="Economy Index",
+#                         min_value=1000,
+#                         max_value=1000000)
+#     literacy_rate = st.sidebar.slider(label="Literacy Rate",
+#                               min_value=0,
+#                               max_value=10)
+#     tier_value = st.sidebar.selectbox('Tier Place you looking for?',
+#                               ('Top', 'Intermediate', 'Low'))
 
-    if tier_value == 'Top':
-        tier_value = 1
-    elif tier_value == 'Intermediate':
-        tier_value = 2
-    else:
-        tier_value = 3
-    lst = [pop_slider, road_factor, tier_value,
-           economy, literacy_rate]
-    for x in lst:
-        input_values.append(x)
+#     if tier_value == 'Top':
+#         tier_value = 1
+#     elif tier_value == 'Intermediate':
+#         tier_value = 2
+#     else:
+#         tier_value = 3
+#     lst = [pop_slider, road_factor, tier_value,
+#            economy, literacy_rate]
+#     for x in lst:
+#         input_values.append(x)
 
-    #print(input_values)
-    # st.write(input_values)
-    # st.sidebar.button('Suggest', on_click=add_to_map, args=(m,))
+#     #print(input_values)
+#     # st.write(input_values)
+#     # st.sidebar.button('Suggest', on_click=add_to_map, args=(m,))
 
-    if st.sidebar.button('Predict'):
+#     if st.sidebar.button('Predict'):
      
-        prediction = model2.predict([input_values])
+#         prediction = model2.predict([input_values])
         
-        #for element in prediction:
-        selected_state.append(prediction[0])
+#         #for element in prediction:
+#         selected_state.append(prediction[0])
 
-        print(prediction[0])
+#         print(prediction[0])
 
-        for element in selected_state:
-            st.sidebar.write(element)
+#         for element in selected_state:
+#             st.sidebar.write(element)
 
-        st.sidebar.success("selected", icon="✅")
+#         st.sidebar.success("selected", icon="✅")
     
-        result = str(prediction[0]).strip()
+#         result = str(prediction[0]).strip()
     #print(st.session_state)
+    # prediction = []
+    # result = []
+    # # st.code('Metrics')
+    # pop_slider = float(st.slider(label='Population',
+    #                             min_value=10000,
+    #                             max_value=10000000))
+    # road_factor = float(st.slider(label="Road Quality",
+    #                             min_value=10000,
+    #                             max_value=1000000))
+    # economy = st.slider(label="Economy Index",
+    #                     min_value=1000,
+    #                     max_value=1000000)
+    # literacy_rate = st.slider(label="Literacy Rate",
+    #                         min_value=0,
+    #                         max_value=10)
+    # tier_value = st.selectbox('Tier Place you looking for?',
+    #                         ('Top', 'Intermediate', 'Low'))
+
+    # if tier_value == 'Top':
+    #     tier_value = 1
+    # elif tier_value == 'Intermediate':
+    #     tier_value = 2
+    # else:
+    #     tier_value = 3
+    # lst = [pop_slider, road_factor, tier_value,
+    #     economy, literacy_rate]
+    
+    # for x in lst:
+    #     input_values.append(x)
+
+    # if st.button('Predict', key='same'):
+    #     st.write('__________________________________________________________')
+    #     prediction = model2.predict([input_values])
+    #     # st.write(prediction[0])
+    #     result = str(prediction[0]).strip()
+    #     df['state'] = df['state'].str.replace(' ', '')
+    #     matching_rows = df[df['state'] == f'{result}']
+    #     st.title(f'Prediction : {result}')
+
+    #     st.write('__________________________________________________________')
+    #     st.title('Possibility of Transactions & Circulations YoY')
+
+    #     st.write('__________________________________________________________')
+    #     pred_state_rows = state_rows[state_rows['state'] == f'{result}']
+
+    # # print(input_values)
+    # # st.write(input_values)
+
+
+    # placeholder = st.empty()
+    # st.title('Distributed Region Numbers')
+
+
+    
    
 
 
@@ -321,17 +388,102 @@ def main():
     # init stored values
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
+    tab1, tab2 = st.tabs(['Prediction','Longs&Lats'])
+    with tab1:
+            st.title('NextBestLocation')
 
-    map_col = st.columns([1])
+   
+    # st.code('Metrics')
+            pop_slider = float(st.slider(label='Population',
+                                        min_value=10000,
+                                        max_value=10000000))
+            road_factor = float(st.slider(label="Road Quality",
+                                        min_value=10000,
+                                        max_value=1000000))
+            economy = st.slider(label="Economy Index",
+                                min_value=1000,
+                                max_value=1000000)
+            literacy_rate = st.slider(label="Literacy Rate",
+                                    min_value=0,
+                                    max_value=10)
+            tier_value = st.selectbox('Tier Place you looking for?',
+                                    ('Top', 'Intermediate', 'Low'))
+
+            if tier_value == 'Top':
+                tier_value = 1
+            elif tier_value == 'Intermediate':
+                tier_value = 2
+            else:
+                tier_value = 3
+            lst = [pop_slider, road_factor, tier_value,
+                economy, literacy_rate]
+
+
+            for x in lst:
+                input_values.append(x)
+
+            # print(input_values)
+            # st.write(input_values)
+
+
+            placeholder = st.empty()
+            st.title('Distributed Region Numbers')
+
+            if st.button('Predict', key='same'):
+                st.write('__________________________________________________________')
+                prediction = model2.predict([input_values])
+                # st.write(prediction[0])
+                result = str(prediction[0]).strip()
+                df['state'] = df['state'].str.replace(' ', '')
+                matching_rows = df[df['state'] == f'{result}']
+                st.title(f'Prediction : {result}')
+
+                st.write('__________________________________________________________')
+                st.title('Possibility of Transactions & Circulations YoY')
+
+                st.write('__________________________________________________________')
+                pred_state_rows = state_rows[state_rows['state'] == f'{result}']
+
+                if not pred_state_rows.empty:
+                    st.write(pred_state_rows)
+                    st.write('Scale:[ Thousand units ] ')
+                else:
+                    st.write('No Matching row found!')
+
+                
+                
+                    
+                for seconds in range(7):
+
+                    
+                    df1['sales_new'] = df1['Sales']*np.random.choice(range(1, 5))
+                    df1['proft_new'] = df1['Profit']*np.random.choice(range(1, 5))
+                    sales = np.mean(df1['sales_new'])
+                    proft = np.mean(df1['proft_new'])
+
+                    with placeholder.container():
+                        kpi1, kpi2 = st.columns(2)
+                        kpi1.metric(label='Sales in Thousands', value=round(
+                            sales), delta=round(sales)-10)
+                        kpi2.metric(label='Profit in Thousands', value=round(
+                            proft), delta=round(proft - 10, 2))
+                    time.sleep(0.5)
+
+    with tab2:
+            map_col = st.columns([1])
   
-    _,map_col,_ = st.columns([1,10,1])
-    with map_col:
-        level1_map_data = st_folium(m, height=700, width=1024)
-        st.session_state.selected_id = level1_map_data['last_object_clicked_tooltip']
+            _,map_col,_ = st.columns([1,10,1])
+            with map_col:
+                level1_map_data = st_folium(m, height=700, width=1024)
+                st.session_state.selected_id = level1_map_data['last_object_clicked_tooltip']
 
-        if st.session_state.selected_id is not None:
-            st.write(f'You Have Selected: {st.session_state.selected_id}')
-            st.image(IM_CONSTANTS[SELECTED_MAP[st.session_state.selected_id]], width=110)
+                if st.session_state.selected_id is not None:
+                    st.write(f'You Have Selected: {st.session_state.selected_id}')
+                    st.image(IM_CONSTANTS[SELECTED_MAP[st.session_state.selected_id]], width=110)
+       
+        
+    
+
 
 
 if __name__ == "__main__":
