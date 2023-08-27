@@ -1,5 +1,6 @@
 import folium
 import math
+import pickle
 import geopandas
 import pandas as pd
 import streamlit as st
@@ -7,6 +8,22 @@ import geopandas as gpd
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 
+model2 = pickle.load(open('state_prediction.pkl', 'rb'))
+
+input_values = []
+# tab1, tab2 = st.tabs(['Longs&Lats', 'Prediction'])
+selected_state = []
+
+state_names = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Goa",
+        "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+        "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttarakhand", "Uttar Pradesh", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli",
+        "Daman and Diu", "Delhi", "Lakshadweep", "Puducherry"
+    ]
 
 def init_map(center=[22.6139, 85.2090], zoom_start=4.5, map_type="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png", max_zoom=5):
     attr = "<a href='https://stadiamaps.com/'>Stadia Maps</a>"
@@ -14,8 +31,6 @@ def init_map(center=[22.6139, 85.2090], zoom_start=4.5, map_type="https://tiles.
 
 init_map()
 
-def state_prediction():
-    st.write("hello")
 
 def calculate_distance(lat1, long1, lat2, long2):
     pi = 3.14159265358979323846
@@ -66,6 +81,8 @@ def plot_from_Citydf(df, folium_map):
 
 def clear_map_markers(folium_map):
     st.cache_resource.clear()
+    while selected_state:
+       selected_state.pop()
     children_copy = folium_map._children.copy()  # Create a copy of the dictionary
     for layer_key, layer in children_copy.items():
         if isinstance(layer, (folium.Marker, folium.CircleMarker)):
@@ -81,8 +98,13 @@ def get_point_from_state():
     cityData['coordinates'] = cityData['coordinates'].apply(Point)
     cityData = geopandas.GeoDataFrame(cityData, geometry='coordinates')
     cityData = cityData.dropna(subset=['Latitude', 'Longitude', 'coordinates'])
+
     if st.session_state.state_select:
-        cityData = cityData[cityData['State'].isin(st.session_state.state_select)]
+        for element in st.session_state.state_select:
+            selected_state.append(element)
+
+    
+    cityData = cityData[cityData['State'].isin(selected_state)]
     
     return cityData
 
@@ -98,20 +120,30 @@ def calculate_distance(lat1, long1, lat2, long2):
 
 def select_top_5():
     walmartData = load_df()
+    print(selected_state)
     cityData = get_point_from_state()
+
+    if cityData.empty:
+        st.sidebar.error("City data is empty :(")
+        return cityData 
+
     cityData['min_distance'] = float('inf')  # Initialize minimum distance column
     for walmart_index, walmart_row in walmartData.iterrows():
         walmart_lat = walmart_row['Latitude']
         walmart_lon = walmart_row['Longitude']
+        if 'distance' in cityData.columns:
+            cityData = cityData.drop('distance', axis=1)
         cityData['distance'] = cityData.apply(lambda row: calculate_distance(row['Latitude'], row['Longitude'], walmart_lat, walmart_lon), axis=1)
         cityData['min_distance'] = cityData[['min_distance', 'distance']].min(axis=1)  # Update minimum distance column
     cityData = cityData.sort_values(by=['min_distance'])
-    cityData = cityData.head(5)
-    print(cityData)
+    if len(cityData) >=5:
+        cityData = cityData.head(5)
+    else:
+        st.sidebar.write("Insuffecient Data :(")
+    #print(cityData)
     return cityData
 
 def load_df():
-    #cityData = pd.read_csv('../data/cityData.csv')
     walmartStores = pd.read_csv('../data/walmart-stores.csv')
     # data = {'ID': ['Monkey', 'B'],
     #         'Icon_ID': [0, 1],
@@ -174,31 +206,82 @@ def main():
     # format page
     
     st.set_page_config(TITLE, page_icon=IM_CONSTANTS['LOGO'], layout='wide')
-    if 'state_names' not in st.session_state:
-        st.session_state.state_names = []
+
+    
+
+    if 'state_select' not in st.session_state:
+        st.session_state.state_select = []
     if 'population_factor' not in st.session_state:
         st.session_state.population_factor = 0
     if 'road_quality_factor' not in st.session_state:
         st.session_state.road_quality_factor = 0
     if 'economy_factor' not in st.session_state:
-        st.session_state.economy_factor = 0
+        st.session_state.economy_factor = 0\
+
+    m = load_map() 
+
+    agree = st.sidebar.checkbox('Use Custom State Filter')
+
+    if agree:
+        multiselect_temp = st.sidebar.multiselect('Select State', state_names, key="state_select")
+        # st.sidebar.success('This is a success message!', icon="✅")
     
 
-    state_names = [
-        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-        "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Goa",
-        "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
-        "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-        "Uttarakhand", "Uttar Pradesh", "West Bengal",
-        "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli",
-        "Daman and Diu", "Delhi", "Lakshadweep", "Puducherry"
-    ]
+    
 
-    st.sidebar.multiselect('Select State', state_names, key="state_select")
-    st.sidebar.slider('Population Factor', 0, 100, key="population_factor")
-    st.sidebar.slider('Road Quality Factor', 0, 100, key="road_quality_factor")
-    st.sidebar.slider('Economy Factor', 0, 100, key="economy_factor")
+    
+    # st.sidebar.slider('Population Factor', 0, 100, key="population_factor")
+    # st.sidebar.slider('Road Quality Factor', 0, 100, key="road_quality_factor")
+    # st.sidebar.slider('Economy Factor', 0, 100, key="economy_factor")
+    prediction = []
+    result = []
+   # st.title('New Prediction')
+    pop_slider = float(st.sidebar.slider(label='Population',
+                                 min_value=10000,
+                                 max_value=10000000))
+                                 
+    road_factor = float(st.sidebar.slider(label="Road Quality",
+                                  min_value=10000,
+                                  max_value=1000000))
+    economy = st.sidebar.slider(label="Economy Index",
+                        min_value=1000,
+                        max_value=1000000)
+    literacy_rate = st.sidebar.slider(label="Literacy Rate",
+                              min_value=0,
+                              max_value=10)
+    tier_value = st.sidebar.selectbox('Tier Place you looking for?',
+                              ('Top', 'Intermediate', 'Low'))
+
+    if tier_value == 'Top':
+        tier_value = 1
+    elif tier_value == 'Intermediate':
+        tier_value = 2
+    else:
+        tier_value = 3
+    lst = [pop_slider, road_factor, tier_value,
+           economy, literacy_rate]
+    for x in lst:
+        input_values.append(x)
+
+    #print(input_values)
+    # st.write(input_values)
+    # st.sidebar.button('Suggest', on_click=add_to_map, args=(m,))
+
+    if st.sidebar.button('Predict'):
+     
+        prediction = model2.predict([input_values])
+        
+        #for element in prediction:
+        selected_state.append(prediction[0])
+
+        print(prediction[0])
+
+        for element in selected_state:
+            st.sidebar.write(element)
+
+        st.sidebar.success("selected", icon="✅")
+    
+        result = str(prediction[0]).strip()
     #print(st.session_state)
    
 
@@ -207,7 +290,7 @@ def main():
         
     # load map data @st.cache_resource
     
-    m = load_map() 
+    
       
     def clearInput():
         for key in list(st.session_state.keys()):  # Using list to avoid RuntimeError due to change in dict size during iteration
@@ -215,7 +298,8 @@ def main():
                 del st.session_state[key]
 
     #st.sidebar.button('Clear',on_click=clearInput())
-    st.sidebar.button('Apply', on_click=state_prediction)
+    
+
     st.sidebar.button('Suggest', on_click=add_to_map, args=(m,))
     st.sidebar.button('Clear', on_click=clear_map_markers, args=(m,))
 
