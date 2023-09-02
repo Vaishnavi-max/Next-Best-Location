@@ -74,20 +74,31 @@ def plot_from_df(df, folium_map):
                       icon=icon).add_to(folium_map)
     return folium_map
     
+# def plot_from_Citydf(df, folium_map):
+#     df = create_point_map(df)
+#     for i, row in df.iterrows():
+#         radius = 5
+#         folium.CircleMarker(
+#             location=[row.Latitude, row.Longitude],
+#             popup="potential warehouse location",
+#             radius=radius,
+#             color='white',
+#             fill=True,
+#             fill_color='skyblue',
+#             fill_opacity=0.8,
+#             tooltip=f'{row.ID}'
+#         ).add_to(folium_map)
+#     return folium_map
+
+
 def plot_from_Citydf(df, folium_map):
     df = create_point_map(df)
     for i, row in df.iterrows():
-        radius = 5
-        folium.CircleMarker(
-            location=[row.Latitude, row.Longitude],
-            popup="potential walmart location",
-            radius=radius,
-            color='white',
-            fill=True,
-            fill_color='skyblue',
-            fill_opacity=0.8,
-            tooltip=f'{row.ID}'
-        ).add_to(folium_map)
+        icon = folium.features.CustomIcon(IM_CONSTANTS[row.Icon_ID], icon_size=(22, 22))
+        folium.Marker([row.Latitude, row.Longitude],
+                      tooltip=f'{row.ID}',
+                      opacity=row.Opacity,
+                      icon=icon).add_to(folium_map)
     return folium_map
 
 def clear_map_markers(folium_map):
@@ -190,9 +201,9 @@ FACT_BACKGROUND = """
 
 TITLE = 'Next Best Location'
 
-IM_CONSTANTS = {'LOGO': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQorPbeKx3qEC0IMzcqIdCQeyJuf929raImVcPKSWU&s',
-                0: 'https://uploads-ssl.webflow.com/64248e7fd5f30d79c9e57d64/64e6177329c2d71389b1b219_walmart.png',
-                1: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQorPbeKx3qEC0IMzcqIdCQeyJuf929raImVcPKSWU&s',
+IM_CONSTANTS = {'LOGO': 'https://cdn-icons-png.flaticon.com/512/407/407775.png',
+                0: 'https://cdn-icons-png.flaticon.com/512/407/407775.png',
+                1: 'https://cdn-icons-png.flaticon.com/512/407/407775.png',
                 }
 SELECTED_MAP = {'walmart store': 0, 'walmart store': 1}
 
@@ -202,7 +213,7 @@ def load_map():
     # Load the map
     m = init_map()  # init
     df = load_df()  # load data
-    m = plot_from_df(df, m)  # plot points
+    #m = plot_from_df(df, m)  # plot points
     return m
 
 def add_to_map(m):
@@ -392,7 +403,9 @@ def main():
     with tab1:
             st.title('NextBestLocation')
 
-   
+            st.write('<style> .css-10y5sf6 { top: -41px , !important; }  </style>', unsafe_allow_html=True)
+           
+            # st.write('<style> p { font-size: 22px !important; }  </style>', unsafe_allow_html=True)
     # st.code('Metrics')
             pop_slider = float(st.slider(label='Population',
                                         min_value=10000,
